@@ -1,0 +1,8 @@
+.canvas{
+  .canvas {
+    position: absolute;
+    box-sizing: border-box;
+    outline: none;
+    background-image: url("../../images/background/spaceFon.jpg");
+  }
+}
