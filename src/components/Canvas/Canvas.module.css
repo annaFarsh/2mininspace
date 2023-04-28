@@ -1,8 +1,8 @@
-.canvas{
-  .canvas {
+.canvas {
     position: absolute;
     box-sizing: border-box;
     outline: none;
     background-image: url("../../images/background/spaceFon.jpg");
+  width: 100vw;
+  height: 100vh;
   }
-}
