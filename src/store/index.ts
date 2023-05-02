@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import runawaySlice from './runawaySlice';
+import spaceshipSlice from './spaceshipSlice';
 
 export const store = configureStore({
   reducer: {
-    runaway: runawaySlice,
+    spaceship: spaceshipSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -11,3 +11,5 @@ export const store = configureStore({
       serializableCheck: false,
     }),
 });
+export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
