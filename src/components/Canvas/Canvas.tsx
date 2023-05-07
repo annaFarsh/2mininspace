@@ -1,170 +1,107 @@
+import React, { FC, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { spaceship, asteroid, space } from '../../assests/gameObjects';
 import {
-  FC,
-  MutableRefObject,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+  goLeft,
+  goRight,
+  setTimestamp,
+  addAsteroid,
+  goAsteroid,
+  goBackground,
+  addBackground,
+} from '../../store/spaceshipSlice';
+import { inRad } from '../../assests/inRad';
+import { store } from '../../store';
+
 import classes from './Canvas.module.css';
-import { translateAndRotateLeft, translateAndRotateRight } from '../../assests/translateAndRotate';
-import { space, spaceship, asteroid } from '../../assests/gameObjects';
-import { sinAndCos } from '../../assests/translateAndRotate';
 
-const Canvas: FC = ({ ...props }) => {
+const Canvas: FC = () => {
+  const widthScreen = window.innerWidth;
+  const heightScreen = window.innerHeight;
+
   const canvas = useRef<HTMLCanvasElement | null>(null);
-  const refRequest = useRef(null);
-  const [timestamp, setTimestamp] = useState(0);
-  const [delta, setDelta] = useState(1);
-  const asteroids: any = [];
-  asteroids[0] = {
-    x: 0,
-    y: -600,
-  };
-  const background: any = [];
-  background[0] = {
-    x: 0,
-    y: -1,
-  };
-  let spaceships: any = {
-    xPos: 500,
-    yPos: 600,
-  };
-
-  let rotationCoordinates = {
-    xPosRight: 500 + 3 * 60,
-    yPosRight: 600 + 60,
-    xPosLeft: 500 - 2 * 60,
-    yPosLeft: 600 + 60,
-  }
-  let keyPressed: any = {
-    keyCode: ""
-  };
-  let currentDegrees = 0;
-  const activeKeys = useRef(keyPressed);
-
-// TODO надо создать две группы координат, содержащие изначальные координаты осей вращения.
-// TODO При нажатии на любую из клавиш вращения, координаты оси обратного вращения должны изменяться с учетом радиуса вращения.
-  function eventHandler(event: KeyboardEvent) {
-    event.preventDefault();
+  const dispatch = useDispatch();
+  const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.code === 'KeyA') {
-      currentDegrees -= 5;
-      let args = sinAndCos(currentDegrees);
-      rotationCoordinates.xPosRight = rotationCoordinates.xPosLeft - 300 * args.cos;
-      rotationCoordinates.yPosRight = rotationCoordinates.yPosLeft - 300 * args.cos;
-
-      activeKeys.current.keyCode = event.code;
-
+      dispatch(goLeft());
     } else if (event.code === 'KeyD') {
-      currentDegrees += 5;
-      let args = sinAndCos(currentDegrees);
-      rotationCoordinates.xPosLeft = rotationCoordinates.xPosRight - 300 * args.cos;
-      rotationCoordinates.yPosLeft = rotationCoordinates.yPosRight - 300 * args.cos;
-
-      activeKeys.current.keyCode = event.code;
+      dispatch(goRight());
     }
-  }
-
-  function dropDegreesWhenCircleReached(degrees: number) {
-    if (degrees === 360 || degrees === -360) {
-      return 0;
-    } else return  degrees;
-  }
-
-  function fly(ctx: CanvasRenderingContext2D,
-               spaceshipImage: HTMLImageElement,
-               xPosition: number,
-               yPosition: number,
-               width: number,
-               height: number,
-               activeKeys:  MutableRefObject<any>,
-               speed: number,
-               degrees: number) {
-    const angle = dropDegreesWhenCircleReached(degrees);
-    const trigonometricFunctions = sinAndCos(angle);
-    // spaceships.xPos += speed * trigonometricFunctions.sin;
-    // spaceships.yPos -= speed * trigonometricFunctions.cos;
-    ctx.save();
-    if (activeKeys.current.keyCode === 'KeyA') {
-      translateAndRotateRight(xPosition, yPosition, width, height, angle, ctx);
-    } else if (activeKeys.current.keyCode === 'KeyD') {
-      translateAndRotateRight(xPosition, yPosition, width, height, angle, ctx);
-    }
-    ctx.drawImage(spaceshipImage, xPosition, yPosition, width, height);
-    ctx.restore();
-
-  }
+  };
 
   const animate = (context: CanvasRenderingContext2D) => {
-    context.drawImage(space, 0, 0, window.innerWidth, window.innerHeight);
-    // for (let i = 0; i < background.length; i++) {
-    //   context.drawImage(
-    //     space,
-    //     background[i].x,
-    //     background[i].y,
-    //     window.innerWidth,
-    //     window.innerHeight,
-    //   );
-    //   background[i].y++;
-    //   if (background[i].y === 0) {
-    //     background.push({
-    //       x: 0,
-    //       y: -window.innerHeight,
-    //     });
+    const state = store.getState();
+    const stateSpaceship = state.spaceship;
+    // context.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    // context.fillRect(0, 0, widthScreen, heightScreen);
+    // for (let i = 0; i < 150; i++) {
+    //   const newStar = star();
+    //   dispatch(addStar({ newStar }));
+    // }
+    // for (let i = 0; i < stateSpaceship.stars.length; i++) {
+    //   context.fillStyle = `rgba(255,255,255,${stateSpaceship.stars[i].opacity})`;
+    //   context.fillRect(stateSpaceship.stars[i].x, stateSpaceship.stars[i].y, 1, 1);
+    //   dispatch(goStar(i));
+    //   if (stateSpaceship.stars[i].y === 0) {
+    //     dispatch(repeatStars());
     //   }
     // }
-
-    // for (let i = 0; i < asteroids.length; i++) {
-    //   context.drawImage(asteroid, asteroids[i].x, asteroids[i].y);
-    //   asteroids[i].y++;
-    //   if (asteroids[i].y === 200) {
-    //     asteroids.push({
-    //       x: 100,
-    //       y: -600,
-    //     });
-    //   }
-    // }
-
-    let degrees = 0;
-    if (activeKeys.current.keyCode === "") {
-      context.save();
-      context.drawImage(spaceship, spaceships.xPos, spaceships.yPos, 60, 60);
-      context.restore();
-
-    } else fly(context, spaceship, spaceships.xPos, spaceships.yPos, 60, 60, activeKeys, 1, currentDegrees);
-
-    refRequest.current = requestAnimationFrame(() => animate(context));
-    setTimestamp(Date.now());
-    if (timestamp !== 0) {
-      setDelta(Date.now() - timestamp);
+    for (let i = 0; i < stateSpaceship.background.length; i++) {
+      context.drawImage(
+        space,
+        stateSpaceship.background[i].x,
+        stateSpaceship.background[i].y,
+        widthScreen,
+        heightScreen,
+      );
+      dispatch(goBackground(i));
+      if (stateSpaceship.background[i].y === 0) {
+        const repeatBackground = { x: 0, y: -heightScreen };
+        dispatch(addBackground({ repeatBackground }));
+      }
     }
+    for (let i = 0; i < stateSpaceship.asteroids.length; i++) {
+      context.drawImage(asteroid, stateSpaceship.asteroids[i].x, stateSpaceship.asteroids[i].y);
+      dispatch(goAsteroid(i));
+      if (stateSpaceship.asteroids[i].y === 300) {
+        const randomX = Math.floor(Math.random() * widthScreen);
+        const newAsteroid = { x: randomX, y: -200 };
+        dispatch(addAsteroid({ newAsteroid }));
+      }
+    }
+    context.save();
+    context.rotate(inRad(stateSpaceship.currentDegrees));
+    context.drawImage(
+      spaceship,
+      stateSpaceship.spaceshipXpos,
+      stateSpaceship.spaceshipYpos,
+      stateSpaceship.widthSpaceship,
+      stateSpaceship.heightSpaceship,
+    );
+    context.restore();
+    window.requestAnimationFrame(() => animate(context));
+    dispatch(setTimestamp());
   };
-  window.addEventListener('keydown', function (event) {
-    eventHandler(event);
-  });
   useEffect(() => {
-    // activeKeys.current.add('up');
     const context: CanvasRenderingContext2D | null = canvas.current.getContext('2d');
     canvas.current.focus();
-    if (!context || !canvas.current) {
-      return;
+    if (context) {
+      window.requestAnimationFrame(() => animate(context));
     }
-    refRequest.current = requestAnimationFrame(() => animate(context));
     return () => {
-      cancelAnimationFrame(refRequest.current);
+      cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
     };
   }, []);
 
   return (
-    <>
-      <canvas
-        ref={canvas}
-        tabIndex={0}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        className={classes.canvas}
-      ></canvas>
-    </>
+    <canvas
+      onKeyDown={onKeyDown}
+      ref={canvas}
+      tabIndex={0}
+      width={widthScreen}
+      height={heightScreen}
+      className={classes.canvas}
+    />
   );
 };
-
 export default Canvas;
