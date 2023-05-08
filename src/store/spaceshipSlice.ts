@@ -11,6 +11,8 @@ const spaceshipSlice = createSlice({
     asteroids: [{ x: 0, y: 0 }],
     spaceshipXpos: 500,
     spaceshipYpos: 600,
+    spaceshipSpeedX: 2,
+    spaceshipSpeedY: 2,
     rotationXinRight: 0,
     rotationYinRight: 0,
     rotationXinLeft: 0,
@@ -24,6 +26,10 @@ const spaceshipSlice = createSlice({
     speedStars: 0.5,
   },
   reducers: {
+    fly (state) {
+      state.spaceshipYpos -= state.spaceshipSpeedY * sinAndCos(state.currentDegrees).cos;
+      state.spaceshipXpos += state.spaceshipSpeedX * sinAndCos(state.currentDegrees).sin;
+    },
     goLeft(state) {
       state.currentDegrees -= 5;
       if (state.currentDegrees === -360) {
@@ -39,10 +45,6 @@ const spaceshipSlice = createSlice({
         state.currentDegrees = 0;
       }
       state.spaceshipYpos -= state.speed * sinAndCos(state.currentDegrees).cos;
-    },
-    translateAndRotateRight(state) {
-      state.spaceshipXpos += state.widthSpaceship * 3;
-      state.spaceshipYpos += state.heightSpaceship;
     },
     setTimestamp(state) {
       state.timestamp = Date.now();
@@ -75,4 +77,4 @@ const spaceshipSlice = createSlice({
   },
 });
 export default spaceshipSlice.reducer;
-export const { goLeft, goRight, setTimestamp, addAsteroid, goAsteroid, goBackground, addBackground } = spaceshipSlice.actions;
+export const { goLeft, goRight, setTimestamp, addAsteroid, goAsteroid, goBackground, addBackground,fly } = spaceshipSlice.actions;

@@ -9,6 +9,7 @@ import {
   goAsteroid,
   goBackground,
   addBackground,
+  fly,
 } from '../../store/spaceshipSlice';
 import { inRad } from '../../assests/inRad';
 import { store } from '../../store';
@@ -24,12 +25,15 @@ const Canvas: FC = () => {
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.code === 'KeyA') {
       dispatch(goLeft());
+      dispatch(fly());
     } else if (event.code === 'KeyD') {
       dispatch(goRight());
+      dispatch(fly());
     }
   };
 
   const animate = (context: CanvasRenderingContext2D) => {
+    dispatch(fly());
     const state = store.getState();
     const stateSpaceship = state.spaceship;
     // context.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -70,7 +74,9 @@ const Canvas: FC = () => {
       }
     }
     context.save();
+    context.translate(stateSpaceship.spaceshipXpos + stateSpaceship.widthSpaceship / 2, stateSpaceship.spaceshipYpos + stateSpaceship.heightSpaceship / 2);
     context.rotate(inRad(stateSpaceship.currentDegrees));
+    context.translate(-(stateSpaceship.spaceshipXpos + stateSpaceship.widthSpaceship / 2), -(stateSpaceship.spaceshipYpos + stateSpaceship.heightSpaceship / 2));
     context.drawImage(
       spaceship,
       stateSpaceship.spaceshipXpos,
