@@ -1,6 +1,13 @@
 import React, { FC, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { imageSpaceship, asteroid, space, imageRocket, imagePlayAgain, imageSpaceshipInFire } from '../../assests/gameObjects';
+import {
+  imageSpaceship,
+  asteroid,
+  space,
+  imageRocket,
+  imagePlayAgain,
+  imageSpaceshipInFire,
+} from '../../assests/gameObjects';
 import {
   goLeft,
   goRight,
@@ -10,7 +17,9 @@ import {
   goBackground,
   addBackground,
   fly,
-  hunt, gameOver,
+  hunt,
+  gameOver,
+  changeMotionVectorRockets,
 } from '../../store/spaceshipSlice';
 import { inRad } from '../../assests/inRad';
 import { store } from '../../store';
@@ -81,11 +90,11 @@ const Canvas: FC = () => {
         dispatch(addAsteroid({ newAsteroid }));
       } else if (
         stateSpaceship.spaceshipXpos + stateSpaceship.widthSpaceship >=
-        stateSpaceship.asteroids[i].x &&
+          stateSpaceship.asteroids[i].x &&
         stateSpaceship.spaceshipXpos <=
-        stateSpaceship.asteroids[i].x + stateSpaceship.asteroidsWidth &&
+          stateSpaceship.asteroids[i].x + stateSpaceship.asteroidsWidth &&
         stateSpaceship.spaceshipYpos <=
-        stateSpaceship.asteroids[i].y + stateSpaceship.asteroidsHeight
+          stateSpaceship.asteroids[i].y + stateSpaceship.asteroidsHeight
       ) {
         dispatch(gameOver());
       }
@@ -96,7 +105,10 @@ const Canvas: FC = () => {
       stateSpaceship.rockets[0].y + stateSpaceship.rocketsHeight / 2,
     );
     context.rotate(inRad(stateSpaceship.currentDegreesRockets));
-    context.translate(-(stateSpaceship.rockets[0].x  + stateSpaceship.rocketsWidth / 2), -(stateSpaceship.rockets[0].y  + stateSpaceship.rocketsHeight / 2));
+    context.translate(
+      -(stateSpaceship.rockets[0].x + stateSpaceship.rocketsWidth / 2),
+      -(stateSpaceship.rockets[0].y + stateSpaceship.rocketsHeight / 2),
+    );
     for (let i = 0; i < stateSpaceship.rockets.length; i++) {
       context.drawImage(
         imageRocket,
@@ -144,11 +156,15 @@ const Canvas: FC = () => {
   useEffect(() => {
     const context: CanvasRenderingContext2D | null = canvas.current.getContext('2d');
     canvas.current.focus();
+    const timer = setInterval(() => {
+      dispatch(changeMotionVectorRockets());
+    }, 1000);
     if (context) {
       window.requestAnimationFrame(() => animate(context));
     }
     return () => {
       cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
+      clearInterval(timer);
     };
   }, []);
 

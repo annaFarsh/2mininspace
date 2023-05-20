@@ -30,37 +30,32 @@ const spaceshipSlice = createSlice({
     gameOver: false,
     playAgain: false,
     mousePosition: { x: 0, y: 0 },
-    timeRockets: 30,
   },
   reducers: {
     fly(state) {
       state.mousePosition = { x: 0, y: 0 };
-      state.spaceshipYpos -=
-        state.spaceshipSpeedY * sinAndCos(state.currentDegrees).cos;
-      state.spaceshipXpos +=
-        state.spaceshipSpeedX * sinAndCos(state.currentDegrees).sin;
+      state.spaceshipYpos -= state.spaceshipSpeedY * sinAndCos(state.currentDegrees).cos;
+      state.spaceshipXpos += state.spaceshipSpeedX * sinAndCos(state.currentDegrees).sin;
     },
     hunt(state, action) {
-      // const coordinatesSpaceship = { x: state.spaceshipXpos, y: state.spaceshipYpos };
-      // const { x, y } = getPositionRocket(
-      //   state.rockets[action.payload],
-      //   coordinatesSpaceship,
-      //   state.timeRockets,
-      // );
+      state.rockets[action.payload].x -=
+        state.speedRockets * sinAndCos(state.currentDegreesRockets).sin;
+      state.rockets[action.payload].y +=
+        state.speedRockets * sinAndCos(state.currentDegreesRockets).cos;
+      if (state.rockets[0].y > state.spaceshipYpos) {
+        state.speedRockets = state.spaceshipSpeedY;
+        state.rockets[action.payload].y +=
+          state.speedRockets * sinAndCos(state.currentDegreesRockets).cos;
+        state.rockets[action.payload].x -=
+          state.speedRockets * sinAndCos(state.currentDegreesRockets).sin;
+      }
+    },
+    changeMotionVectorRockets(state) {
       state.currentDegreesRockets = getCurrentDegreesRockets(
         state.spaceshipXpos,
         state.spaceshipYpos,
         state.rockets[0],
       );
-      state.rockets[action.payload].x -= state.speedRockets * sinAndCos(state.currentDegreesRockets).sin;
-      state.rockets[action.payload].y += state.speedRockets * sinAndCos(state.currentDegreesRockets).cos;
-      if(state.rockets[0].y >= state.spaceshipYpos){
-        state.currentDegreesRockets = -180;
-        //state.currentDegreesRocketsInRad *= Math.PI;
-        state.speedRockets = state.spaceshipSpeedY;
-        state.rockets[action.payload].y += (state.speedRockets + 2) * sinAndCos(state.currentDegreesRockets).cos;
-        state.rockets[action.payload].x -= state.speedRockets * sinAndCos(state.currentDegreesRockets).sin;
-      }
     },
     goLeft(state) {
       state.currentDegrees -= 5;
@@ -138,4 +133,5 @@ export const {
   gameOver,
   getMousePosition,
   hunt,
+  changeMotionVectorRockets,
 } = spaceshipSlice.actions;

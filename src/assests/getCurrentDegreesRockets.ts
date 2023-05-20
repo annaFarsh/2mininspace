@@ -3,13 +3,15 @@ export const getCurrentDegreesRockets = (
   spaceshipYpos: number,
   rocketPosition: Record<string, number>,
 ) => {
-  const vectorX = spaceshipXpos - rocketPosition.x;
-  const vectorY = spaceshipYpos - rocketPosition.y;
-  const motionVector = Math.sqrt((vectorX ** 2) + (vectorY ** 2));
-  // const oppositeLeg = spaceshipXpos - rocketPosition.x;
-  // const adjacentLeg = spaceshipYpos - rocketPosition.y;
+  let vectorX;
+  let vectorY;
+  vectorX = spaceshipXpos - rocketPosition.x;
+  vectorY = spaceshipYpos - rocketPosition.y;
+  const motionVector = Math.sqrt(vectorX ** 2 + vectorY ** 2);
   const sin = vectorX / motionVector;
-  return -(Math.asin(sin) * 180) / Math.PI;
-  // const tg = oppositeLeg / adjacentLeg;
-  // return 2 * Math.PI - Math.tan(tg);
+  if (rocketPosition.y > spaceshipYpos) {
+    return -180 - -(Math.asin(sin) * 180) / Math.PI;
+  } else {
+    return -(Math.asin(sin) * 180) / Math.PI;
+  }
 };
