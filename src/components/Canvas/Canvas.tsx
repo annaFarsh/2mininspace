@@ -5,8 +5,10 @@ import {
   asteroid,
   space,
   imageRocket,
-  imagePlayAgain,
   imageSpaceshipInFire,
+  imageMoon,
+  asteroidTwo,
+  asteroidThree,
 } from '../../assests/gameObjects';
 import {
   goLeft,
@@ -20,16 +22,31 @@ import {
   hunt,
   gameOver,
   changeMotionVectorRockets,
+  goawayRocket,
+  getMousePosition,
 } from '../../store/spaceshipSlice';
 import { inRad } from '../../assests/inRad';
 import { store } from '../../store';
+import { getRandomArrayElem } from '../../assests/getRandomArrayElem';
+import { checkCollision } from '../../assests/checkCollision';
 
 import classes from './Canvas.module.css';
 
 const Canvas: FC = () => {
   const widthScreen = window.innerWidth;
   const heightScreen = window.innerHeight;
-
+  const arrayGabaritsAsteroids = [60, 70, 80, 90, 100];
+  const arrayAsteroids = [
+    { image: asteroid },
+    { image: asteroidTwo },
+    { image: asteroidThree },
+    {
+      image: imageMoon,
+      width: 600,
+      height: 300,
+    },
+  ];
+  const playAgain = useRef<HTMLButtonElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const dispatch = useDispatch();
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -41,26 +58,17 @@ const Canvas: FC = () => {
       dispatch(fly());
     }
   };
-
+  const onMouseDown = (event: React.MouseEvent) => {
+    const mousePosition = { x: event.clientX, y: event.clientY };
+    dispatch(getMousePosition(mousePosition));
+  };
   const animate = (context: CanvasRenderingContext2D) => {
-    dispatch(fly());
-    dispatch(hunt(0));
     const state = store.getState();
     const stateSpaceship = state.spaceship;
+    dispatch(fly());
+    dispatch(hunt(stateSpaceship.currentRocket));
     context.fillStyle = 'rgba(0, 0, 0, 0.4)';
     context.fillRect(0, 0, widthScreen, heightScreen);
-    // for (let i = 0; i < 150; i++) {
-    //   const newStar = star();
-    //   dispatch(addStar({ newStar }));
-    // }
-    // for (let i = 0; i < stateSpaceship.stars.length; i++) {
-    //   context.fillStyle = `rgba(255,255,255,${stateSpaceship.stars[i].opacity})`;
-    //   context.fillRect(stateSpaceship.stars[i].x, stateSpaceship.stars[i].y, 1, 1);
-    //   dispatch(goStar(i));
-    //   if (stateSpaceship.stars[i].y === 0) {
-    //     dispatch(repeatStars());
-    //   }
-    // }
     for (let i = 0; i < stateSpaceship.background.length; i++) {
       context.drawImage(
         space,
@@ -77,39 +85,55 @@ const Canvas: FC = () => {
     }
     for (let i = 0; i < stateSpaceship.asteroids.length; i++) {
       context.drawImage(
-        asteroid,
+        stateSpaceship.asteroids[i].image || asteroid,
         stateSpaceship.asteroids[i].x,
         stateSpaceship.asteroids[i].y,
-        stateSpaceship.asteroidsWidth,
-        stateSpaceship.asteroidsHeight,
+        stateSpaceship.asteroids[i].width,
+        stateSpaceship.asteroids[i].height,
       );
+
       dispatch(goAsteroid(i));
       if (stateSpaceship.asteroids[i].y === 300) {
         const randomX = Math.floor(Math.random() * widthScreen);
-        const newAsteroid = { x: randomX, y: -200 };
+        const randomAsteroid = getRandomArrayElem(arrayAsteroids);
+        const randomSizeAsteroid = getRandomArrayElem(arrayGabaritsAsteroids);
+        const newAsteroid = {
+          x: randomX,
+          y: -300,
+          image: arrayAsteroids[randomAsteroid].image,
+          width: arrayAsteroids[randomAsteroid].width || arrayGabaritsAsteroids[randomSizeAsteroid],
+          height:
+            arrayAsteroids[randomAsteroid].height || arrayGabaritsAsteroids[randomSizeAsteroid],
+        };
         dispatch(addAsteroid({ newAsteroid }));
-      } else if (
-        stateSpaceship.spaceshipXpos + stateSpaceship.widthSpaceship >=
-          stateSpaceship.asteroids[i].x &&
-        stateSpaceship.spaceshipXpos <=
-          stateSpaceship.asteroids[i].x + stateSpaceship.asteroidsWidth &&
-        stateSpaceship.spaceshipYpos <=
-          stateSpaceship.asteroids[i].y + stateSpaceship.asteroidsHeight
+      }
+      if (
+        checkCollision(
+          stateSpaceship.spaceshipXpos,
+          stateSpaceship.spaceshipYpos,
+          stateSpaceship.widthSpaceship,
+          stateSpaceship.heightSpaceship,
+          stateSpaceship.asteroids[i].x,
+          stateSpaceship.asteroids[i].y,
+          stateSpaceship.asteroids[i].width,
+          stateSpaceship.asteroids[i].height,
+        )
       ) {
         dispatch(gameOver());
       }
     }
     context.save();
-    context.translate(
-      stateSpaceship.rockets[0].x + stateSpaceship.rocketsWidth / 2,
-      stateSpaceship.rockets[0].y + stateSpaceship.rocketsHeight / 2,
-    );
-    context.rotate(inRad(stateSpaceship.currentDegreesRockets));
-    context.translate(
-      -(stateSpaceship.rockets[0].x + stateSpaceship.rocketsWidth / 2),
-      -(stateSpaceship.rockets[0].y + stateSpaceship.rocketsHeight / 2),
-    );
+
     for (let i = 0; i < stateSpaceship.rockets.length; i++) {
+      context.translate(
+        stateSpaceship.rockets[i].x + stateSpaceship.rocketsWidth / 2,
+        stateSpaceship.rockets[i].y + stateSpaceship.rocketsHeight / 2,
+      );
+      context.rotate(inRad(stateSpaceship.currentDegreesRockets));
+      context.translate(
+        -(stateSpaceship.rockets[i].x + stateSpaceship.rocketsWidth),
+        -(stateSpaceship.rockets[i].y + stateSpaceship.rocketsHeight),
+      );
       context.drawImage(
         imageRocket,
         stateSpaceship.rockets[i].x,
@@ -117,6 +141,21 @@ const Canvas: FC = () => {
         stateSpaceship.rocketsWidth,
         stateSpaceship.rocketsHeight,
       );
+
+      if (
+        checkCollision(
+          stateSpaceship.spaceshipXpos,
+          stateSpaceship.spaceshipYpos,
+          stateSpaceship.widthSpaceship,
+          stateSpaceship.heightSpaceship,
+          stateSpaceship.rockets[i].x,
+          stateSpaceship.rockets[i].y,
+          stateSpaceship.rocketsWidth,
+          stateSpaceship.rocketsHeight,
+        )
+      ) {
+        dispatch(gameOver());
+      }
     }
     context.restore();
     context.save();
@@ -150,33 +189,48 @@ const Canvas: FC = () => {
       );
       cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
       context.restore();
-      context.drawImage(imagePlayAgain, widthScreen / 2 - 300, heightScreen / 2 - 300, 600, 600);
+      playAgain.current.style.display = 'block';
     }
+  };
+  const gameRepeat = () => {
+    window.location.reload();
   };
   useEffect(() => {
     const context: CanvasRenderingContext2D | null = canvas.current.getContext('2d');
     canvas.current.focus();
     const timer = setInterval(() => {
-      dispatch(changeMotionVectorRockets());
+      dispatch(changeMotionVectorRockets('continue'));
     }, 1000);
+    const timerStopHunt = setInterval(() => {
+      dispatch(changeMotionVectorRockets('stop'));
+    }, 3000);
+    const timerGoawayCurrenRocket = setInterval(() => {
+      dispatch(goawayRocket());
+    }, 15000);
     if (context) {
       window.requestAnimationFrame(() => animate(context));
     }
     return () => {
       cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
       clearInterval(timer);
+      clearInterval(timerStopHunt);
+      clearInterval(timerGoawayCurrenRocket);
     };
   }, []);
 
   return (
-    <canvas
-      onKeyDown={onKeyDown}
-      ref={canvas}
-      tabIndex={0}
-      width={widthScreen}
-      height={heightScreen}
-      className={classes.canvas}
-    />
+    <div className={classes.wrapper}>
+      <button onClick={gameRepeat} ref={playAgain} className={classes.repeat} />
+      <canvas
+        onKeyDown={onKeyDown}
+        ref={canvas}
+        tabIndex={0}
+        width={widthScreen}
+        height={heightScreen}
+        className={classes.canvas}
+        onMouseDown={onMouseDown}
+      />
+    </div>
   );
 };
 export default Canvas;

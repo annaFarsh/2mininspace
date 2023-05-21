@@ -3,5 +3,22 @@
     box-sizing: border-box;
     outline: none;
   }
-
+.wrapper{
+    position: relative;
+}
+.repeat{
+    position: absolute;
+    top: 200px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    width: 688px;
+    height:645px;
+    z-index: 1;
+    margin: 0 auto;
+    background-image: url('../../images/playagain.jpg');
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
 
