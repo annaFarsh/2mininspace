@@ -28,6 +28,9 @@ const spaceshipSlice = createSlice({
     mousePosition: { x: 0, y: 0 },
     currentRocket: 0,
     goaway: false,
+    timeGame: { min: 2, sec: 0 },
+    savePlayerResult: { min: 0, sec: 0 },
+    win: false,
   },
   reducers: {
     fly(state) {
@@ -47,21 +50,28 @@ const spaceshipSlice = createSlice({
           state.rockets[action.payload].x -=
             state.speedRockets * sinAndCos(state.currentDegreesRockets).sin;
         }
-      } else {
-        state.rockets[action.payload].x -= state.speedRockets;
+      } if(state.goaway){
+        state.rockets[action.payload].x += state.speedRockets;
         state.rockets[action.payload].y += state.speedRockets;
       }
     },
-    changeMotionVectorRockets(state, action) {
-      state.currentDegreesRockets = getCurrentDegreesRockets(
-        state.spaceshipXpos,
-        state.spaceshipYpos,
-        state.rockets[state.currentRocket],
-        action.payload,
-      );
+    changeMotionVectorRockets(state) {
+      if(state.rockets[state.currentRocket]){
+        state.currentDegreesRockets = getCurrentDegreesRockets(
+          state.spaceshipXpos,
+          state.spaceshipYpos,
+          state.rockets[state.currentRocket],
+        );
+      }
     },
     goawayRocket(state){
       state.goaway = true;
+      const newRocket = {x: -50, y: (-400 + state.spaceshipYpos) };
+      state.rockets = [...state.rockets, newRocket ];
+    },
+    goNewRocket(state){
+      state.currentRocket += 1;
+      state.goaway = false;
     },
     goLeft(state) {
       state.currentDegrees -= 5;
@@ -96,6 +106,7 @@ const spaceshipSlice = createSlice({
       state.background = [...state.background, action.payload.repeatBackground];
     },
     gameOver(state) {
+      state.savePlayerResult = state.timeGame;
       state.gameOver = true;
     },
     getMousePosition(state, action) {
@@ -108,6 +119,24 @@ const spaceshipSlice = createSlice({
       ) {
         state.gameOver = false;
         state.playAgain = true;
+      }
+    },
+    dropTime(state){
+      if (state.timeGame.min > 0) {
+        if (state.timeGame.sec > 0) {
+          state.timeGame.sec = state.timeGame.sec - 1
+        } else if (state.timeGame.sec === 0) {
+          state.timeGame.min = state.timeGame.min - 1
+          state.timeGame.sec = 59
+        }
+      } else if (state.timeGame.min === 0) {
+        if (state.timeGame.sec > 0) {
+          state.timeGame.sec = state.timeGame.sec - 1
+        } else if (state.timeGame.sec === 0) {
+          state.timeGame.min = 0
+          state.timeGame.sec = 0
+          state.win = true
+        }
       }
     },
     // addStar(state, action) {
@@ -137,4 +166,6 @@ export const {
   hunt,
   changeMotionVectorRockets,
   goawayRocket,
+  goNewRocket,
+  dropTime,
 } = spaceshipSlice.actions;

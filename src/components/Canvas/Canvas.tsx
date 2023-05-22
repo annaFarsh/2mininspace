@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, RefObject, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   imageSpaceship,
@@ -24,6 +24,8 @@ import {
   changeMotionVectorRockets,
   goawayRocket,
   getMousePosition,
+  goNewRocket,
+  dropTime,
 } from '../../store/spaceshipSlice';
 import { inRad } from '../../assests/inRad';
 import { store } from '../../store';
@@ -46,6 +48,7 @@ const Canvas: FC = () => {
       height: 300,
     },
   ];
+  const playEnd = useRef<HTMLButtonElement | null>(null);
   const playAgain = useRef<HTMLButtonElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const dispatch = useDispatch();
@@ -67,8 +70,9 @@ const Canvas: FC = () => {
     const stateSpaceship = state.spaceship;
     dispatch(fly());
     dispatch(hunt(stateSpaceship.currentRocket));
-    context.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    context.fillRect(0, 0, widthScreen, heightScreen);
+    const timeString = `${stateSpaceship.timeGame.min} : ${stateSpaceship.timeGame.sec}`
+    // context.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    // context.fillRect(0, 0, widthScreen, heightScreen);
     for (let i = 0; i < stateSpaceship.background.length; i++) {
       context.drawImage(
         space,
@@ -122,22 +126,24 @@ const Canvas: FC = () => {
         dispatch(gameOver());
       }
     }
+    context.fillStyle = '#09E409';
+    context.font = "48px roboto";
+    context.fillText(timeString, widthScreen/2 - 80, 80);
+    context.fill();
     context.save();
-
-    for (let i = 0; i < stateSpaceship.rockets.length; i++) {
       context.translate(
-        stateSpaceship.rockets[i].x + stateSpaceship.rocketsWidth / 2,
-        stateSpaceship.rockets[i].y + stateSpaceship.rocketsHeight / 2,
+        stateSpaceship.rockets[stateSpaceship.currentRocket].x + stateSpaceship.rocketsWidth / 2,
+        stateSpaceship.rockets[stateSpaceship.currentRocket].y + stateSpaceship.rocketsHeight / 2,
       );
       context.rotate(inRad(stateSpaceship.currentDegreesRockets));
       context.translate(
-        -(stateSpaceship.rockets[i].x + stateSpaceship.rocketsWidth),
-        -(stateSpaceship.rockets[i].y + stateSpaceship.rocketsHeight),
+        -(stateSpaceship.rockets[stateSpaceship.currentRocket].x + stateSpaceship.rocketsWidth),
+        -(stateSpaceship.rockets[stateSpaceship.currentRocket].y + stateSpaceship.rocketsHeight),
       );
       context.drawImage(
         imageRocket,
-        stateSpaceship.rockets[i].x,
-        stateSpaceship.rockets[i].y,
+        stateSpaceship.rockets[stateSpaceship.currentRocket].x,
+        stateSpaceship.rockets[stateSpaceship.currentRocket].y,
         stateSpaceship.rocketsWidth,
         stateSpaceship.rocketsHeight,
       );
@@ -148,15 +154,15 @@ const Canvas: FC = () => {
           stateSpaceship.spaceshipYpos,
           stateSpaceship.widthSpaceship,
           stateSpaceship.heightSpaceship,
-          stateSpaceship.rockets[i].x,
-          stateSpaceship.rockets[i].y,
+          stateSpaceship.rockets[stateSpaceship.currentRocket].x,
+          stateSpaceship.rockets[stateSpaceship.currentRocket].y,
           stateSpaceship.rocketsWidth,
           stateSpaceship.rocketsHeight,
         )
       ) {
         dispatch(gameOver());
       }
-    }
+
     context.restore();
     context.save();
     context.translate(
@@ -179,7 +185,7 @@ const Canvas: FC = () => {
       context.restore();
       window.requestAnimationFrame(() => animate(context));
       dispatch(setTimestamp());
-    } else {
+    } if (stateSpaceship.gameOver) {
       context.drawImage(
         imageSpaceshipInFire,
         stateSpaceship.spaceshipXpos,
@@ -190,6 +196,8 @@ const Canvas: FC = () => {
       cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
       context.restore();
       playAgain.current.style.display = 'block';
+    } if(stateSpaceship.win){
+      playEnd.current.style.display = 'block';
     }
   };
   const gameRepeat = () => {
@@ -199,11 +207,12 @@ const Canvas: FC = () => {
     const context: CanvasRenderingContext2D | null = canvas.current.getContext('2d');
     canvas.current.focus();
     const timer = setInterval(() => {
-      dispatch(changeMotionVectorRockets('continue'));
+      dispatch(changeMotionVectorRockets());
+      dispatch(dropTime());
     }, 1000);
-    const timerStopHunt = setInterval(() => {
-      dispatch(changeMotionVectorRockets('stop'));
-    }, 3000);
+    const timerGoNewRocket = setInterval(() => {
+      dispatch(goNewRocket());
+    }, 20000);
     const timerGoawayCurrenRocket = setInterval(() => {
       dispatch(goawayRocket());
     }, 15000);
@@ -213,7 +222,7 @@ const Canvas: FC = () => {
     return () => {
       cancelAnimationFrame(window.requestAnimationFrame(() => animate(context)));
       clearInterval(timer);
-      clearInterval(timerStopHunt);
+      clearInterval(timerGoNewRocket);
       clearInterval(timerGoawayCurrenRocket);
     };
   }, []);
@@ -221,6 +230,7 @@ const Canvas: FC = () => {
   return (
     <div className={classes.wrapper}>
       <button onClick={gameRepeat} ref={playAgain} className={classes.repeat} />
+      <button onClick={gameRepeat} ref={playEnd} className={classes.end} />
       <canvas
         onKeyDown={onKeyDown}
         ref={canvas}

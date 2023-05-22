@@ -21,4 +21,31 @@
     background-repeat: no-repeat;
     cursor: pointer;
 }
+.timer{
+    position: absolute;
+    display: block;
+    bottom: 0;
+    margin: 0 auto;
+    width: 80px;
+    height: 80px;
+    z-index: 1;
+    font-size: 20px;
+}
+.end{
+    position: absolute;
+    top: 200px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    width: 688px;
+    height:645px;
+    z-index: 1;
+    margin: 0 auto;
+    background-image: url('../../images/win.jpg');
+    background-size: cover;
+    background-clip: border-box;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
 
